@@ -330,6 +330,17 @@ public:
     }
 };
 
+//
+// Процедура обработки коллизий
+//
+void collisionHandler(
+    std::vector<TUnit*>   &vec1, // Враги
+    std::vector<TObject*> &vec2  // Снаряды
+)
+{
+    //...
+}
+
 int main()
 {
     srand(time(0)); // Рандомизация генератора случайных чисел
@@ -450,6 +461,10 @@ int main()
             }
         }
 
+        //
+        // П О В Е Д Е Н И Е   О Б Ъ Е К Т О В
+        //
+
         // Поворачиваем линию выстрела к курсору
         {
             float shotLineAngle = atan2(mousePos.y - player.getPosition().y, mousePos.x - player.getPosition().x) * 180 / 3.1415;
@@ -494,11 +509,18 @@ int main()
 
         freezingField.behavior(time);
 
+        //
+        // С Т О Л К Н О В Е Н И Я
+        //
+        collisionHandler(vecEnemy, vecBullets);
+
+        //
+        // О Т Р И С О В К А   И Г Р Ы
+        //
         window.clear();
         background.draw(window);
         location.draw(window);
         smoke.draw(window);
-        
         player.draw(window);
         shotLine.draw(window);
         //bullet.draw(window);
@@ -513,6 +535,9 @@ int main()
         window.display();
     }
 
+    //
+    // Ч И С Т К А   П А М Я Т И
+    //
     for (int i = 0; i < vecBullets.size(); ++i) delete vecBullets[i];
     for (int i = 0; i < vecEnemy.size();   ++i) delete vecEnemy[i];
 
