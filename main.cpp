@@ -31,6 +31,7 @@ public:
         addTexture(5, "src/images/background.png");
         addTexture(6, "src/images/location.png");
         addTexture(7, "src/images/smoke.png");
+        addTexture(8, "src/images/FreezingField.png");
     }
     ~TCPPDatabase()
     {
@@ -227,6 +228,14 @@ public:
     {
         behavior_status = 2;
     }
+    void refresh()
+    {
+        behavior_status = 0;
+        spawn_time_cur  = 0.0f;
+        spawn_time_max  = 0.1f;
+        all_time_cur    = 0.0f;
+        all_time_max    = 10.0f;
+    }
     //
     // Params:
     //   time - время 
@@ -364,6 +373,27 @@ void collisionHandler(
     }
 }
 
+class TButton : public TObject
+{
+public:    
+    TButton() : TObject()
+    {
+
+    }
+    bool check1(sf::Vector2f& mouse_pos)
+    {
+        if (getPosition().x <= mouse_pos.x
+            && mouse_pos.x <= getPosition().x + getTextureRect().width
+            && getPosition().y <= mouse_pos.y
+            && mouse_pos.y <= getPosition().y + getTextureRect().height)
+        {
+            return true;
+        }
+
+        return false;
+    }
+};
+
 int main()
 {
     srand(time(0)); // Рандомизация генератора случайных чисел
@@ -432,6 +462,12 @@ int main()
     for (int i = 0; i < sf::Mouse::ButtonCount; ++i)
         mouse[i] = false;
     
+    TButton buttonFreezingField;
+    buttonFreezingField.setTextureById(8);
+    buttonFreezingField.setPosition(758, 460);
+
+    int control_status = 0;
+
     clock.restart();
     while (window.isOpen())
     {
@@ -448,21 +484,39 @@ int main()
             {
                 mousePos.x = event.mouseMove.x;
                 mousePos.y = event.mouseMove.y;
-                //cout << mousePos.x << ':' << mousePos.y << endl;
+                //cout << "mousePos: " << mousePos.x << ':' << mousePos.y << endl;
             }
             else if (event.type == sf::Event::MouseButtonPressed)
             {
                 mouse[event.mouseButton.button] = true;
                 if (event.mouseButton.button == sf::Mouse::Left)
                 {
-                    TObject* bullet = new TObject();
-                    bullet->setTextureById(4);
-                    bullet->setSpeed(300.0f);
-                    bullet->setOrigin(8, 8);
-                    bullet->setMoveType(2); // По дуге
-                    bullet->setPosition(player.getPosition());
-                    bullet->setMovePosition(mousePos);
-                    vecBullets.push_back(bullet);
+                    if (control_status == 0)
+                    {
+                        if (buttonFreezingField.check1(mousePos))
+                        {
+                            control_status = 1; // Нажали на кнопку заклинания FreezingField
+                        }
+                        else
+                        {
+                            //Создаём снаряд
+                            TObject* bullet = new TObject();
+                            bullet->setTextureById(4);
+                            bullet->setSpeed(300.0f);
+                            bullet->setOrigin(8, 8);
+                            bullet->setMoveType(2); // По дуге
+                            bullet->setPosition(player.getPosition());
+                            bullet->setMovePosition(mousePos);
+                            vecBullets.push_back(bullet);
+                        }
+                    }
+                    else
+                    {
+                        freezingField.refresh();
+                        freezingField.setPosition(mousePos.x, 100);
+                        freezingField.start();
+                        control_status = 0;
+                    }
                 }
                 else if (event.mouseButton.button == sf::Mouse::Right)
                 {
@@ -483,6 +537,10 @@ int main()
                 keys[event.key.code] = false;
             }
         }
+        //
+        // G U I
+        //
+        
 
         //
         // П О В Е Д Е Н И Е   О Б Ъ Е К Т О В
@@ -533,8 +591,6 @@ int main()
         for (int i = 0; i < vecEnemy.size(); ++i)
             vecEnemy[i]->behavior(time);
 
-        
-
         //
         // С Т О Л К Н О В Е Н И Я
         //
@@ -558,6 +614,13 @@ int main()
         enemy.draw(window);
         for (int i = 0; i < vecEnemy.size(); ++i)
             vecEnemy[i]->draw(window);
+
+
+        //
+        // D R A W   G U I
+        //
+        buttonFreezingField.draw(window);
+
         window.display();
     }
 
