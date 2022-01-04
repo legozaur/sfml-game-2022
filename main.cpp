@@ -200,7 +200,6 @@ public:
 
 class FreezingField : public TObject
 {
-    std::vector<TObject*> vecObjects;
     int behavior_status; // 0 - ничего
                          // 1 - Запуск
                          // 2 - Завершение
@@ -220,11 +219,6 @@ public:
     {
         
     }
-    ~FreezingField()
-    {
-        for (int i = 0; i < vecObjects.size(); ++i)
-            delete vecObjects[i];
-    }
     void start()
     {
         behavior_status = 1;
@@ -233,7 +227,12 @@ public:
     {
         behavior_status = 2;
     }
-    void behavior(float time)
+    //
+    // Params:
+    //   time - время 
+    //   vec - вектор снарядов. В него будут добавляться снаряды от этого заклинания.
+    // 
+    void behavior(float time, std::vector<TObject*> &vec)
     {
         if (behavior_status == 0)
             return;
@@ -263,25 +262,13 @@ public:
                 obj->setMoveType(2); // По дуге
                 obj->setPosition(TObject::getPosition() + rand_pos1);
                 obj->setMovePosition(rand_pos2);
-                vecObjects.push_back(obj);
+                vec.push_back(obj);
             }
         }
         else
         {
             finish();
         }
-
-        for (int i = 0; i < vecObjects.size(); ++i)
-            vecObjects[i]->behavior(time);
-    }
-    void draw(sf::RenderWindow& window)
-    {
-        for (int i = 0; i < vecObjects.size(); ++i)
-            vecObjects[i]->draw(window);
-    }
-    std::vector<TObject*>& getVecObjects()
-    {
-        return vecObjects;
     }
 };
 
@@ -342,11 +329,12 @@ bool collisionObjects(TUnit* unit, TObject* object)
     float dx = pos1.x - pos2.x;
     float dy = pos1.y - pos2.y;
     float dist2 = dx * dx + dy * dy;
+    
     //
-    // Если квадрат расстоянимя мужду объектами (dist2) меньше чем 64*64
+    // Если квадрат расстоянимя мужду объектами (dist2) меньше чем 16*16=256 (16 - радиус)
     // Работает быстрее, т.к. функция извлечения корня гораздо нагрузочнее умножения
     //
-    if (dist2 < 64 * 64)
+    if (dist2 <= 256.0f)
         return true;
 
     return false;
@@ -413,7 +401,7 @@ int main()
 
     std::vector<TUnit*> vecEnemy;
     float enemy_spawn_time_cur = 0.0f;
-    float enemy_spawn_time_max = 2.0f;
+    float enemy_spawn_time_max = 0.25f;
 
     FreezingField freezingField;
 
@@ -500,6 +488,9 @@ int main()
         // П О В Е Д Е Н И Е   О Б Ъ Е К Т О В
         //
 
+        // Заклинание "Freezing Field" может добавить снаряды в vecBullets
+        freezingField.behavior(time, vecBullets);
+
         // Поворачиваем линию выстрела к курсору
         {
             float shotLineAngle = atan2(mousePos.y - player.getPosition().y, mousePos.x - player.getPosition().x) * 180 / 3.1415;
@@ -542,7 +533,7 @@ int main()
         for (int i = 0; i < vecEnemy.size(); ++i)
             vecEnemy[i]->behavior(time);
 
-        freezingField.behavior(time);
+        
 
         //
         // С Т О Л К Н О В Е Н И Я
