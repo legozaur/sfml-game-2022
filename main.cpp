@@ -65,22 +65,32 @@ private:
 
 TCPPDatabase db;
 
+// Спрайт для отрисовки всех полосок здоровья
 sf::Sprite sprite_hp(db.getTexture(0));
 
-
+// Процедура для отрисовки полоски здоровья в указанных координатах
 void draw_hp_bar(sf::RenderWindow &window, sf::Vector2f pos, float hp_cur, float hp_max)
 {
+    // Полоски с 0 ХП не рисуем (Деление на 0)
     if (hp_max == 0) return;
 
-    sprite_hp.setPosition(pos);
-    sprite_hp.setScale(64 * hp_cur / hp_max, 10);
+    // Полные полоски здоровья не рисуем
+    if (hp_cur == hp_max) return;
+
+    // Помещаем полоску в указанные координаты со смещением влево на 16 и вверх на 32
+    sprite_hp.setPosition(pos + sf::Vector2f(-16, -32));
+    
+    // Увеличиваем пиксель в полоску ХП
+    sprite_hp.setScale(32 * hp_cur / hp_max, 10.0f);
+    
+    // Рисуем полоску ХП
     window.draw(sprite_hp);
 }
 
 void init()
 {
-    sprite_hp.setOrigin(32, 32);
-    //sprite_hp.setColor(sf::Color::Red);
+    //sprite_hp.setOrigin(32, 32);
+    sprite_hp.setColor(sf::Color::Red);
 }
 
 
@@ -285,8 +295,8 @@ protected:
 public:
     TUnit()
         : TObject()
-        , hp_cur(1)
-        , hp_max(2)
+        , hp_cur(99)
+        , hp_max(100)
         , hp_reg(0)
         , is_regen(false)
     {
