@@ -291,8 +291,8 @@ protected:
 public:
     TUnit()
         : TObject()
-        , hp_cur(99)
-        , hp_max(100)
+        , hp_cur(3)
+        , hp_max(3)
         , hp_reg(0)
         , is_regen(false)
     {
@@ -323,6 +323,27 @@ public:
                 hp_cur = hp_max;
             }
         }
+    }
+    void setDamage(float value)
+    {
+        // Урон не может быть отрицательным
+        if (value <= 0.0f)
+            return;
+
+        hp_cur -= value;
+
+        // HP не может упасть ниже нуля
+        if (hp_cur < 0.0f)
+            hp_cur = 0.0f;
+    }
+    //
+    // Умер ли юнит
+    // true - да
+    // false - нет
+    //
+    bool isDeath()
+    {
+        return hp_cur <= 0.0f;
     }
 };
 
@@ -364,10 +385,16 @@ void collisionHandler(
             // Если объекты столкнулись
             if (collisionObjects(vec1[i], vec2[j]))
             {
-                vec1.erase(vec1.begin() + i);
+                vec1[i]->setDamage(1);
+                if (vec1[i]->isDeath())
+                {
+                    // Удалем объект
+                    vec1.erase(vec1.begin() + i);
+                    i--;
+                    break; // Вываливаемся из цикла j
+                }
+                // Удаляем сосульку
                 vec2.erase(vec2.begin() + j);
-                i--;
-                break; // Вываливаемся из цикла j
             }
         }
     }
@@ -499,7 +526,7 @@ int main()
                         }
                         else
                         {
-                            //Создаём снаряд
+                            //Создаём снаряд`
                             TObject* bullet = new TObject();
                             bullet->setTextureById(4);
                             bullet->setSpeed(300.0f);
