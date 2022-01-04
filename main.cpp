@@ -330,6 +330,28 @@ public:
     }
 };
 
+
+bool collisionObjects(TUnit* unit, TObject* object)
+{
+    // Если какой-то из объектов не существует
+    if (unit == nullptr || object == nullptr)
+        return false;
+
+    sf::Vector2f pos1 = unit->getPosition();
+    sf::Vector2f pos2 = object->getPosition();
+    float dx = pos1.x - pos2.x;
+    float dy = pos1.y - pos2.y;
+    float dist2 = dx * dx + dy * dy;
+    //
+    // Если квадрат расстоянимя мужду объектами (dist2) меньше чем 64*64
+    // Работает быстрее, т.к. функция извлечения корня гораздо нагрузочнее умножения
+    //
+    if (dist2 < 64 * 64)
+        return true;
+
+    return false;
+}
+
 //
 // Процедура обработки коллизий
 //
@@ -338,7 +360,20 @@ void collisionHandler(
     std::vector<TObject*> &vec2  // Снаряды
 )
 {
-    //...
+    for (int i = 0; i < vec1.size(); ++i)
+    {
+        for (int j = 0; j < vec2.size(); ++j)
+        {
+            // Если объекты столкнулись
+            if (collisionObjects(vec1[i], vec2[j]))
+            {
+                vec1.erase(vec1.begin() + i);
+                vec2.erase(vec2.begin() + j);
+                i--;
+                break; // Вываливаемся из цикла j
+            }
+        }
+    }
 }
 
 int main()
